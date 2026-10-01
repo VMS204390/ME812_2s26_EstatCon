@@ -1,0 +1,268 @@
+---
+title: "Contrastes - Scheffé"
+format: html
+editor: visual
+---
+
+```{r}
+library(car)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(emmeans)
+
+dados <- read.csv("C:/Users/Usuario/Downloads/dados_elasticidade.csv")
+
+dados$Grupo <- factor(
+  dados$Grupo,
+  levels = c("E", "A", "B", "C", "D")
+)
+
+# CPs identificados anteriormente pelo critério de 1,5 x IQR
+
+CP_outliers <- c(11, 14, 27, 42, 54, 57)
+
+
+# =========================================================
+#  RETIRAR TEMPORARIAMENTE OS POSSÍVEIS OUTLIERS
+# =========================================================
+
+dados_sem_outliers <- dados %>%
+  filter(!CP %in% CP_outliers)
+
+
+dados_sem_outliers$Grupo <- factor(
+  dados_sem_outliers$Grupo,
+  levels = c("E", "A", "B", "C", "D")
+)
+```
+
+## Constrastes
+
+```{r}
+contrastes <- list(
+  
+  "E vs A-D" = c(
+    1,
+    -0.25,
+    -0.25,
+    -0.25,
+    -0.25
+  ),
+  
+  "E-A vs B-C-D" = c(
+    0.5,
+    0.5,
+    -1/3,
+    -1/3,
+    -1/3
+  ),
+  
+  "E-A-B vs C-D" = c(
+    1/3,
+    1/3,
+    1/3,
+    -0.5,
+    -0.5
+  ),
+  
+  "E-A-B-C vs D" = c(
+    0.25,
+    0.25,
+    0.25,
+    0.25,
+    -1
+  ),
+  
+  "A-B-C vs D" = c(
+    0,
+    1/3,
+    1/3,
+    1/3,
+    -1
+  ),
+  
+  "E-B vs C-D" = c(
+    0.5,0,0.5,-0.5,-0.5),
+  
+  "E vs A-B" = c(1,-0.5,-0.5,0,0)
+  
+)
+
+```
+
+## EL - Dados gerais
+
+```{r}
+
+
+modelo_EL <- aov(EL ~ Grupo, data = dados)
+
+medias_EL <- emmeans(modelo_EL, ~ Grupo)
+
+contrastes_EL <- contrast(
+  medias_EL,
+  method = contrastes
+)
+
+summary(
+  contrastes_EL,
+  infer = c(TRUE, TRUE),
+  adjust = "scheffe"
+)
+
+```
+
+## ER - Dados gerais
+
+```{r}
+modelo_ER <- aov(ER ~ Grupo, data = dados)
+
+medias_ER <- emmeans(modelo_ER, ~ Grupo)
+
+contrastes_ER <- contrast(
+  medias_ER,
+  method = contrastes
+)
+
+summary(
+  contrastes_ER,
+  infer = c(TRUE, TRUE),
+  adjust = "scheffe"
+)
+```
+
+## ET - Dados gerais
+
+```{r}
+modelo_ET <- aov(ET ~ Grupo, data = dados)
+
+medias_ET <- emmeans(modelo_ET, ~ Grupo)
+
+contrastes_ET <- contrast(
+  medias_ET,
+  method = contrastes
+)
+
+summary(
+  contrastes_ET,
+  infer = c(TRUE, TRUE),
+  adjust = "scheffe"
+)
+```
+
+### Arrumando em tabela
+
+```{r}
+resultado_EL <- as.data.frame(
+  summary(
+    contrastes_EL,
+    infer = c(TRUE, TRUE),
+    adjust = "scheffe"
+  )
+)
+
+resultado_ER <- as.data.frame(
+  summary(
+    contrastes_ER,
+    infer = c(TRUE, TRUE),
+    adjust = "scheffe"
+  )
+)
+
+resultado_ET <- as.data.frame(
+  summary(
+    contrastes_ET,
+    infer = c(TRUE, TRUE),
+    adjust = "scheffe"
+  )
+)
+```
+
+```{r}
+resultado_EL$Modulo <- "EL"
+resultado_ER$Modulo <- "ER"
+resultado_ET$Modulo <- "ET"
+
+resultado_scheffe <- rbind(
+  resultado_EL,
+  resultado_ER,
+  resultado_ET
+)
+
+resultado_scheffe
+```
+
+## EL - Dados sem valores anômalos
+
+```{r}
+
+modelo_EL <- aov(EL ~ Grupo, data = dados_sem_outliers)
+
+medias_EL <- emmeans(modelo_EL, ~ Grupo)
+
+contrastes_EL <- contrast(
+  medias_EL,
+  method = contrastes
+)
+
+summary(
+  contrastes_EL,
+  infer = c(TRUE, TRUE),
+  adjust = "scheffe"
+)
+```
+
+## ER - Dados sem valores anômalos
+
+```{r}
+modelo_ER <- aov(ER ~ Grupo, data = dados_sem_outliers)
+
+medias_ER <- emmeans(modelo_ER, ~ Grupo)
+
+contrastes_ER <- contrast(
+  medias_ER,
+  method = contrastes
+)
+
+summary(
+  contrastes_ER,
+  infer = c(TRUE, TRUE),
+  adjust = "scheffe"
+)
+```
+
+## ET - Dados sem valores anômalos
+
+```{r}
+modelo_ET <- aov(ET ~ Grupo, data = dados)
+
+medias_ET <- emmeans(modelo_ET, ~ Grupo)
+
+contrastes_ET <- contrast(
+  medias_ET,
+  method = contrastes
+)
+
+summary(
+  contrastes_ET,
+  infer = c(TRUE, TRUE),
+  adjust = "scheffe"
+)
+```
+
+## Tabela
+
+```{r}
+resultado_EL$Modulo <- "EL"
+resultado_ER$Modulo <- "ER"
+resultado_ET$Modulo <- "ET"
+
+resultado_scheffe <- rbind(
+  resultado_EL,
+  resultado_ER,
+  resultado_ET
+)
+
+resultado_scheffe
+```
